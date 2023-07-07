@@ -1,9 +1,10 @@
 import {User} from "../models/models";
 import fs from "fs";
+import * as path from "path";
 
 export class UserService{
     users: User[] = [];
-    usersDirPath: string = 'C:/Users/Nune/OneDrive/Рабочий стол/CRUD/DB/users.json'
+    usersDirPath: string =  path.join(__dirname,'..', 'DB', 'users.json')
 
     constructor() {
         this.users = this.getUsers() || [];
