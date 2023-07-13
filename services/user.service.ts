@@ -1,18 +1,45 @@
 import {User} from "../models/models";
 import fs from "fs";
 import * as path from "path";
+import {NextFunction, Request, Response} from "express";
 
 export class UserService{
     users: User[] = [];
     usersDirPath: string =  path.join(__dirname,'..', 'DB', 'users.json')
 
     constructor() {
-        this.users = this.getUsers() || [];
+        this.getUsers().then((users) => {
+            this.users = users || [];
+        });
     }
 
-    private getUsers(): User[]{
-        let usersJsonData = fs.readFileSync(this.usersDirPath).toString()
-        return JSON.parse(usersJsonData).users;
+    authMiddleWare(req: Request, res: Response, next: NextFunction) {
+        const apiKey = req.get('api-key')
+
+        if (apiKey === 'q48n0v4428n91') {
+            next()
+        } else {
+            res.status(401).send('Invalid Key')
+        }
+    }
+
+    private writeFile(content: string){
+        fs.writeFile(this.usersDirPath, content, (err) => {
+            if (err) throw err;
+        })
+    }
+
+    private async readUsers(){
+        let fileContent: User[] = [];
+        await fs.readFile(this.usersDirPath, (err, data)=>{
+            if (err) throw err;
+            fileContent.push(...JSON.parse(data.toString()).users)
+        })
+        return fileContent;
+    }
+
+    private async getUsers(): Promise<User[]>{
+        return await this.readUsers();
     }
 
     private generateUserId(): number{
@@ -37,7 +64,7 @@ export class UserService{
         }
 
         this.users.push(user)
-        fs.writeFileSync(this.usersDirPath, JSON.stringify({users: this.users}))
+        this.writeFile(JSON.stringify({users: this.users}))
         return user;
 
     }
@@ -52,22 +79,22 @@ export class UserService{
         this.users[this.users.findIndex(user=> user.id === id)] = {
             ...user
         }
-        fs.writeFileSync(this.usersDirPath, JSON.stringify({users: this.users}))
+        this.writeFile(JSON.stringify({users: this.users}))
         return user as User;
     }
 
-    toggleUserStatus(id: number): User{
+    activateUser(id: number): User{
         let user: User = this.users.find(user => user.id === id) as User;
-        user.status = !user.status;
+        user.status = true;
         this.users[this.users.findIndex(user=> user.id === id)] = {
             ...user
         }
-        fs.writeFileSync(this.usersDirPath, JSON.stringify({users: this.users}));
+        this.writeFile(JSON.stringify({users: this.users}))
         return user;
     }
 
     deleteUser(id: number): void{
         this.users = this.users.filter(user => user.id !== id)
-        fs.writeFileSync(this.usersDirPath, JSON.stringify({users: this.users}))
+        this.writeFile(JSON.stringify({users: this.users}))
     }
 }

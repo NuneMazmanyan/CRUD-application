@@ -1,36 +1,29 @@
-import express, {Request, Response} from "express";
+import express, {Request, Response, Router} from "express";
 import {UserController} from "../controllers/user.controller";
 import {UserService} from "../services/user.service";
 
-export const userController = new UserController(new UserService())
+const UserController1 = new UserController(new UserService())
 
-const app = express();
+const userRouter: Router = express.Router();
 
-const port = 3000;
-
-app.use(express.json());
-
-app.listen(port, () => {
-    console.log('Message sent from port: ', port)
+userRouter.get('/users/:userId', UserController1.UserService.authMiddleWare, (req: Request, res: Response) => {
+    UserController1.getUser(req, res)
 })
 
-app.get('/users/:userId', userController.authMiddleWare, (req: Request, res: Response) => {
-    userController.getUser(req, res)
+userRouter.post('/users', (req: Request, res: Response) => {
+    UserController1.createUser(req, res);
 })
 
-app.post('/user', (req: Request, res: Response) => {
-    userController.createUser(req, res);
+userRouter.patch('/users/:userId', UserController1.UserService.authMiddleWare, (req: Request, res: Response) => {
+    UserController1.updateUser(req, res)
 })
 
-app.patch('/users/:userId', userController.authMiddleWare, (req: Request, res: Response) => {
-    userController.updateUser(req, res)
+userRouter.patch('/users/:userId/status', UserController1.UserService.authMiddleWare, (req: Request, res: Response) => {
+    UserController1.activateUser(req, res)
 })
 
-app.patch('/users/:userId/status', userController.authMiddleWare, (req: Request, res: Response) => {
-    userController.toggleUserStatus(req, res)
+userRouter.delete('/users/:userId', UserController1.UserService.authMiddleWare, (req: Request, res: Response) => {
+    UserController1.deleteUser(req, res)
 })
 
-app.delete('/users/:userId', userController.authMiddleWare, (req: Request, res: Response) => {
-    userController.deleteUser(req, res)
-})
-
+export default userRouter;

@@ -1,20 +1,9 @@
 import {UserService} from "../services/user.service";
 import {User} from "../models/models";
-import {NextFunction, Request, Response} from 'express';
+import {Request, Response} from 'express';
 
 export class UserController {
-    constructor(private UserService: UserService) {
-    }
-
-    authMiddleWare(req: Request, res: Response, next: NextFunction) {
-        const apiKey = req.get('api-key')
-
-        if (apiKey === 'q48n0v4428n91') {
-            next()
-        } else {
-            res.status(401).send('Invalid Key')
-        }
-    }
+    constructor(public UserService: UserService) {}
 
     getUser(req: Request, res: Response): void {
         const userId: number = +req.params.userId;
@@ -22,20 +11,20 @@ export class UserController {
             const result = this.UserService.getUser(userId)
             res.status(201).send(result)
         } catch (err) {
-            console.log(err)
+            res.status(500).send(err)
         }
     }
 
     createUser(req: Request, res: Response): void {
         const userCredentials: Omit<User, 'id' | 'creationTimestamp' | 'modificationTimestamp' | 'status'> = req.body;
         if (userCredentials.age < 18 || userCredentials.age > 99) {
-            console.error('Your age is not match our requirements')
+            res.status(403).send("Your age is not match our requirements")
         }
         try {
             let user = this.UserService.createUser(userCredentials)
             res.status(201).send(`Created Successfully: ${user}`)
         } catch (err) {
-            console.log(err)
+            res.status(500).send(err)
         }
     }
 
@@ -47,18 +36,18 @@ export class UserController {
             const user = this.UserService.updateUser(userId, userCredentials)
             res.status(201).send(`Updated Successfully: ${user}`)
         } catch (err) {
-            console.log(err)
+            res.status(500).send(err)
         }
     }
 
-    toggleUserStatus(req: Request, res: Response): void {
+    activateUser(req: Request, res: Response): void {
         const userId: number = +req.params.userId;
 
         try {
-            const user = this.UserService.toggleUserStatus(userId);
+            const user = this.UserService.activateUser(userId);
             res.status(201).send(`Status changed Successfully: ${user}`)
         } catch (err) {
-            console.log(err)
+            res.status(500).send(err)
         }
     }
 
@@ -69,7 +58,7 @@ export class UserController {
             this.UserService.deleteUser(userId);
             res.status(201).send("Successfully deleted")
         } catch (err) {
-            console.log(err)
+            res.status(500).send(err)
         }
     }
 }
